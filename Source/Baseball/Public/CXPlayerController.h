@@ -8,6 +8,8 @@
 
 
 class UCXChatInput;
+class UUserWidget;
+
 /**
  * 
  */
@@ -18,6 +20,8 @@ class BASEBALL_API ACXPlayerController : public APlayerController
 	
 
 public:
+
+	ACXPlayerController();
 	virtual void BeginPlay() override;
 	void SetChatMessageString(const FString& InChatMessageString);
 	void PrintChatMessageString(const FString& InChatMessageString);
@@ -28,6 +32,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerRPCPrintChatMessageString(const FString& InChatMessageString);
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+	
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UCXChatInput> ChatInputWidgetClass;
@@ -36,4 +43,15 @@ protected:
 	TObjectPtr<UCXChatInput> ChatInputWidgetInstance;
 
 	FString ChatMessageString;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> NotificationTextWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> NotificationTextWidgetInstance;
+
+public:
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	FText NotificationText;
+
 };

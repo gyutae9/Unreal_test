@@ -31,8 +31,22 @@ public:
 
 	void IncreaseGuessCount(ACXPlayerController* InChattingPlayerController);
 
+	void ResetGame();
+
+	void JudgeGame(ACXPlayerController* InChattingPlayerController, int InStrikeCount);
+
+	ACXPlayerController* GetCurrentTurnPlayerController() const;
+
+private:
+	UFUNCTION()
+	void OnMainTimerElapsed();
+
 protected:
 	FString SecretNumberString;
 
 	TArray<TObjectPtr<ACXPlayerController>> AllPlayerControllers;
+
+	FTimerHandle MainTimerHandle;
+
+	int32 CurrentTurnIndex = 0;
 };

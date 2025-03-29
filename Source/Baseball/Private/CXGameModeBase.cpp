@@ -7,25 +7,23 @@
 #include "CXPlayerState.h"
 #include "CXGameStateBase.h"
 
+void ACXGameModeBase::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SecretNumberString = GenerateSecretNumber();
+	//GetWorldTimerManager().SetTimer(MainTimerHandle, this, &ACXGameModeBase::OnMainTimerElapsed, 15.f, true);
+}
+
+
 void ACXGameModeBase::OnPostLogin(AController* NewPlayer)
 {
 	Super::OnPostLogin(NewPlayer);
 
-	// ACXGameStateBase* CXGameStateBase =  GetGameState<ACXGameStateBase>();
-	// if (IsValid(CXGameStateBase) == true)
-	// {
-	// 	CXGameStateBase->MulticastRPCBroadcastLoginMessage(TEXT("XXXXXXX"));
-	// }
-	//
-	// ACXPlayerController* CXPlayerController = Cast<ACXPlayerController>(NewPlayer);
-	// if (IsValid(CXPlayerController) == true)
-	// {
-	// 	AllPlayerControllers.Add(CXPlayerController);
-	// }
-
 	ACXPlayerController* CXPlayerController = Cast<ACXPlayerController>(NewPlayer);
 	if (IsValid(CXPlayerController) == true)
 	{
+		CXPlayerController->NotificationText = FText::FromString(TEXT("Connected to the game server."));
 		AllPlayerControllers.Add(CXPlayerController);
 
 		ACXPlayerState* CXPS = CXPlayerController->GetPlayerState<ACXPlayerState>();
@@ -39,6 +37,16 @@ void ACXGameModeBase::OnPostLogin(AController* NewPlayer)
 		{
 			CXGameStateBase->MulticastRPCBroadcastLoginMessage(CXPS->PlayerNameString);
 		}
+		if (CurrentTurnIndex == AllPlayerControllers.Num() - 1)
+		{
+			CXPlayerController->NotificationText = FText::FromString(TEXT("It's your turn!"));
+		}
+		else
+		{
+			CXPlayerController->NotificationText = FText::FromString(TEXT("Waiting for other player..."));
+		}
+	
+
 	}
 }
 
@@ -129,19 +137,14 @@ FString ACXGameModeBase::JudgeResult(const FString& InSecretNumberString, const 
 }
 
 
-void ACXGameModeBase::BeginPlay()
-{
-	Super::BeginPlay();
-
-	SecretNumberString = GenerateSecretNumber();
-}
-
 void ACXGameModeBase::PrintChatMessageString(ACXPlayerController* InChattingPlayerController, const FString& InChatMessageString)
 {
 	FString ChatMessageString = InChatMessageString;
 	int Index = InChatMessageString.Len() - 3;
 	FString GuessNumberString = InChatMessageString.RightChop(Index);
-	if (IsGuessNumberString(GuessNumberString) == true)
+
+	if (IsGuessNumberString(GuessNumberString) == true && InChattingPlayerController == GetCurrentTurnPlayerController())
+
 	{
 		FString JudgeResultString = JudgeResult(SecretNumberString, GuessNumberString);
 
@@ -154,6 +157,8 @@ void ACXGameModeBase::PrintChatMessageString(ACXPlayerController* InChattingPlay
 			{
 				FString CombinedMessageString = InChatMessageString + TEXT(" -> ") + JudgeResultString;
 				CXPlayerController->ClientRPCPrintChatMessageString(CombinedMessageString);
+				int32 StrikeCount = FCString::Atoi(*JudgeResultString.Left(1));
+				JudgeGame(InChattingPlayerController, StrikeCount);
 			}
 
 		}
@@ -177,5 +182,105 @@ void ACXGameModeBase::IncreaseGuessCount(ACXPlayerController* InChattingPlayerCo
 	if (IsValid(CXPS) == true)
 	{
 		CXPS->CurrentGuessCount++;
+	}
+}
+
+void ACXGameModeBase::ResetGame()
+{
+	SecretNumberString = GenerateSecretNumber();
+
+	for (const auto& CXPlayerController : AllPlayerControllers)
+	{
+		ACXPlayerState* CXPS = CXPlayerController->GetPlayerState<ACXPlayerState>();
+		if (IsValid(CXPS) == true)
+		{
+			CXPS->CurrentGuessCount = 0;
+		}
+	}
+	CurrentTurnIndex = 0;
+}
+
+void ACXGameModeBase::JudgeGame(ACXPlayerController* InChattingPlayerController, int InStrikeCount)
+{
+	if (3 == InStrikeCount)
+	{
+		ACXPlayerState* CXPS = InChattingPlayerController->GetPlayerState<ACXPlayerState>();
+		for (const auto& CXPlayerController : AllPlayerControllers)
+		{
+			if (IsValid(CXPS) == true)
+			{
+				FString CombinedMessageString = CXPS->PlayerNameString + TEXT(" has won the game.");
+				CXPlayerController->NotificationText = FText::FromString(CombinedMessageString);
+
+				ResetGame();
+			}
+		}
+	}
+	else
+	{
+		bool bIsDraw = true;
+		for (const auto& CXPlayerController : AllPlayerControllers)
+		{
+			ACXPlayerState* CXPS = CXPlayerController->GetPlayerState<ACXPlayerState>();
+			if (IsValid(CXPS) == true)
+			{
+				if (CXPS->CurrentGuessCount < CXPS->MaxGuessCount)
+				{
+					bIsDraw = false;
+					break;
+				}
+			}
+		}
+
+		if (true == bIsDraw)
+		{
+			for (const auto& CXPlayerController : AllPlayerControllers)
+			{
+				CXPlayerController->NotificationText = FText::FromString(TEXT("Draw..."));
+
+				ResetGame();
+			}
+		}
+	}
+}
+
+
+ACXPlayerController* ACXGameModeBase::GetCurrentTurnPlayerController() const
+{
+	if (AllPlayerControllers.IsEmpty() == true)
+	{
+		return nullptr;
+	}
+
+	if (AllPlayerControllers.IsValidIndex(CurrentTurnIndex))
+	{
+		return AllPlayerControllers[CurrentTurnIndex];
+	}
+
+	return nullptr;
+}
+
+void ACXGameModeBase::OnMainTimerElapsed()
+{
+	if (AllPlayerControllers.Num() == 0)
+	{
+		return;
+	}
+
+	CurrentTurnIndex = (CurrentTurnIndex + 1) % AllPlayerControllers.Num();
+
+	for (int32 i = 0; i < AllPlayerControllers.Num(); ++i)
+	{
+		if (IsValid(AllPlayerControllers[i]) == true)
+		{
+			if (i == CurrentTurnIndex)
+			{
+				AllPlayerControllers[i]->NotificationText = FText::FromString(TEXT("It's your turn!"));
+			}
+			else
+			{
+				AllPlayerControllers[i]->NotificationText = FText::FromString(TEXT("Waiting for other player..."));
+			}
+		}
 	}
 }

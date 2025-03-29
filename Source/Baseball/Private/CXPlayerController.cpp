@@ -9,6 +9,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "CXGameModeBase.h"
 #include "CXPlayerState.h"
+#include "Net/UnrealNetwork.h"
+
+ACXPlayerController::ACXPlayerController()
+{
+	bReplicates = true;
+}
 
 void ACXPlayerController::BeginPlay()
 {
@@ -30,6 +36,15 @@ void ACXPlayerController::BeginPlay()
 			ChatInputWidgetInstance->AddToViewport();
 		}
 	}
+
+	if (IsValid(NotificationTextWidgetClass) == true)
+	{
+		NotificationTextWidgetInstance = CreateWidget<UUserWidget>(this, NotificationTextWidgetClass);
+		if (IsValid(NotificationTextWidgetInstance) == true)
+		{
+			NotificationTextWidgetInstance->AddToViewport();
+		}
+	}
 }
 
 void ACXPlayerController::SetChatMessageString(const FString& InChatMessageString)
@@ -43,7 +58,7 @@ void ACXPlayerController::SetChatMessageString(const FString& InChatMessageStrin
 		ACXPlayerState* CXPS = GetPlayerState<ACXPlayerState>();
 		if (IsValid(CXPS) == true)
 		{
-			//FString CombinedMessageString = CXPS->PlayerNameString + TEXT(": ") + InChatMessageString;
+			
 			FString CombinedMessageString = CXPS->GetPlayerInfoString() + TEXT(": ") + InChatMessageString;
 			ServerRPCPrintChatMessageString(CombinedMessageString);
 		}
@@ -52,13 +67,9 @@ void ACXPlayerController::SetChatMessageString(const FString& InChatMessageStrin
 
 void ACXPlayerController::PrintChatMessageString(const FString& InChatMessageString)
 {
-	//UKismetSystemLibrary::PrintString(this, ChatMessageString, true, true, FLinearColor::Red, 5.0f);
+	
 
-	FString NetModeString = BaseballFunctionLibrary::GetNetModeString(this);
-	FString CombinedMessageString = FString::Printf(TEXT("%s: %s"), *NetModeString, *InChatMessageString);
-	BaseballFunctionLibrary::MyPrintString(this, CombinedMessageString, 10.f);
-
-	//BaseballFunctionLibrary::MyPrintString(this, InChatMessageString, 10.f);
+BaseballFunctionLibrary::MyPrintString(this, InChatMessageString, 10.f);
 }
 
 void ACXPlayerController::ClientRPCPrintChatMessageString_Implementation(const FString& InChatMessageString)
@@ -68,14 +79,7 @@ void ACXPlayerController::ClientRPCPrintChatMessageString_Implementation(const F
 
 void ACXPlayerController::ServerRPCPrintChatMessageString_Implementation(const FString& InChatMessageString)
 {
-	// for (TActorIterator<ACXPlayerController> It(GetWorld()); It; ++It)
-	// {
-	// 	ACXPlayerController* CXPlayerController = *It;
-	// 	if (IsValid(CXPlayerController) == true)
-	// 	{
-	// 		CXPlayerController->ClientRPCPrintChatMessageString(InChatMessageString);
-	// 	}
-	// }
+	
 
 	AGameModeBase* GM = UGameplayStatics::GetGameMode(this);
 	if (IsValid(GM) == true)
@@ -88,3 +92,9 @@ void ACXPlayerController::ServerRPCPrintChatMessageString_Implementation(const F
 	}
 }
 
+void ACXPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, NotificationText);
+}

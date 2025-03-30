@@ -69,7 +69,7 @@ FString ACXGameModeBase::GenerateSecretNumber()
 		Numbers.RemoveAt(Index);
 	}
 
-// UE_LOG(LogTemp, Warning, TEXT("Secret Number: %s"), *Result); 
+ UE_LOG(LogTemp, Warning, TEXT("Secret Number: %s"), *Result); 
 	// Secret Number 출력값 확인
 
 	return Result;
@@ -153,6 +153,7 @@ void ACXGameModeBase::PrintChatMessageString(ACXPlayerController* InChattingPlay
 		FString JudgeResultString = JudgeResult(SecretNumberString, GuessNumberString);
 
 		IncreaseGuessCount(InChattingPlayerController);
+		int32 StrikeCount = FCString::Atoi(*JudgeResultString.Left(1));
 		
 		for (TActorIterator<ACXPlayerController> It(GetWorld()); It; ++It)
 		{
@@ -161,10 +162,16 @@ void ACXGameModeBase::PrintChatMessageString(ACXPlayerController* InChattingPlay
 			{
 				FString CombinedMessageString = InChatMessageString + TEXT(" -> ") + JudgeResultString;
 				CXPlayerController->ClientRPCPrintChatMessageString(CombinedMessageString);
-				int32 StrikeCount = FCString::Atoi(*JudgeResultString.Left(1));
-				JudgeGame(InChattingPlayerController, StrikeCount);
+				
+				
+				
 			}
+			
 
+		}
+		if (HasAuthority())
+		{
+			JudgeGame(InChattingPlayerController, StrikeCount);
 		}
 	}
 	else
@@ -216,9 +223,11 @@ void ACXGameModeBase::JudgeGame(ACXPlayerController* InChattingPlayerController,
 				FString CombinedMessageString = CXPS->PlayerNameString + TEXT(" has won the game.");
 				CXPlayerController->NotificationText = FText::FromString(CombinedMessageString);
 
-				ResetGame();
+				
 			}
 		}
+
+		GetWorldTimerManager().SetTimer(MainTimerHandle, this, &ACXGameModeBase::ResetGame, 5.f, false);
 	}
 	else
 	{
@@ -246,6 +255,8 @@ void ACXGameModeBase::JudgeGame(ACXPlayerController* InChattingPlayerController,
 			}
 		}
 	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("JudgeGame called with StrikeCount: %d"), InStrikeCount);
 }
 
 

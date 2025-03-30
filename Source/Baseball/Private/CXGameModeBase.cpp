@@ -69,6 +69,9 @@ FString ACXGameModeBase::GenerateSecretNumber()
 		Numbers.RemoveAt(Index);
 	}
 
+// UE_LOG(LogTemp, Warning, TEXT("Secret Number: %s"), *Result); 
+	// Secret Number 출력값 확인
+
 	return Result;
 }
 
@@ -104,7 +107,7 @@ bool ACXGameModeBase::IsGuessNumberString(const FString& InNumberString)
 		bCanPlay = true;
 
 	} while (false);
-
+    
 	return bCanPlay;
 }
 
@@ -132,7 +135,8 @@ FString ACXGameModeBase::JudgeResult(const FString& InSecretNumberString, const 
 	{
 		return TEXT("OUT");
 	}
-
+  // UE_LOG(LogTemp, Warning, TEXT("%s"), *FString::Printf(TEXT("%dS%dB"), StrikeCount, BallCount));  
+  // StrikeCount,BallCount 출력값 확인
 	return FString::Printf(TEXT("%dS%dB"), StrikeCount, BallCount);
 }
 

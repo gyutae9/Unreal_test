@@ -68,8 +68,11 @@ void ACXPlayerController::SetChatMessageString(const FString& InChatMessageStrin
 void ACXPlayerController::PrintChatMessageString(const FString& InChatMessageString)
 {
 	
+	FString NetModeString = BaseballFunctionLibrary::GetNetModeString(this);
+	FString CombinedMessageString = FString::Printf(TEXT("%s: %s"), *NetModeString, *InChatMessageString);
+	BaseballFunctionLibrary::MyPrintString(this, CombinedMessageString, 10.f);
 
-BaseballFunctionLibrary::MyPrintString(this, InChatMessageString, 10.f);
+   //BaseballFunctionLibrary::MyPrintString(this, InChatMessageString, 10.f);
 }
 
 void ACXPlayerController::ClientRPCPrintChatMessageString_Implementation(const FString& InChatMessageString)

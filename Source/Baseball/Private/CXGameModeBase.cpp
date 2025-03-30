@@ -12,7 +12,7 @@ void ACXGameModeBase::BeginPlay()
 	Super::BeginPlay();
 
 	SecretNumberString = GenerateSecretNumber();
-	//GetWorldTimerManager().SetTimer(MainTimerHandle, this, &ACXGameModeBase::OnMainTimerElapsed, 15.f, true);
+	GetWorldTimerManager().SetTimer(MainTimerHandle, this, &ACXGameModeBase::OnMainTimerElapsed, 15.f, true);
 }
 
 

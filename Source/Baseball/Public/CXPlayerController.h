@@ -54,4 +54,5 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	FText NotificationText;
 
+
 };

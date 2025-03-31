@@ -37,14 +37,7 @@ void ACXGameModeBase::OnPostLogin(AController* NewPlayer)
 		{
 			CXGameStateBase->MulticastRPCBroadcastLoginMessage(CXPS->PlayerNameString);
 		}
-		if (CurrentTurnIndex == AllPlayerControllers.Num() - 1)
-		{
-			CXPlayerController->NotificationText = FText::FromString(TEXT("It's your turn!"));
-		}
-		else
-		{
-			CXPlayerController->NotificationText = FText::FromString(TEXT("Waiting for other player..."));
-		}
+		
 	
 
 	}
@@ -147,7 +140,7 @@ void ACXGameModeBase::PrintChatMessageString(ACXPlayerController* InChattingPlay
 	int Index = InChatMessageString.Len() - 3;
 	FString GuessNumberString = InChatMessageString.RightChop(Index);
 
-	if (IsGuessNumberString(GuessNumberString) == true && InChattingPlayerController == GetCurrentTurnPlayerController())
+	if (IsGuessNumberString(GuessNumberString) == true && InChattingPlayerController)
 
 	{
 		FString JudgeResultString = JudgeResult(SecretNumberString, GuessNumberString);
@@ -208,7 +201,8 @@ void ACXGameModeBase::ResetGame()
 			CXPS->CurrentGuessCount = 0;
 		}
 	}
-	CurrentTurnIndex = 0;
+	
+	
 }
 
 void ACXGameModeBase::JudgeGame(ACXPlayerController* InChattingPlayerController, int InStrikeCount)
@@ -259,43 +253,8 @@ void ACXGameModeBase::JudgeGame(ACXPlayerController* InChattingPlayerController,
 	UE_LOG(LogTemp, Warning, TEXT("JudgeGame called with StrikeCount: %d"), InStrikeCount);
 }
 
-
-ACXPlayerController* ACXGameModeBase::GetCurrentTurnPlayerController() const
-{
-	if (AllPlayerControllers.IsEmpty() == true)
-	{
-		return nullptr;
-	}
-
-	if (AllPlayerControllers.IsValidIndex(CurrentTurnIndex))
-	{
-		return AllPlayerControllers[CurrentTurnIndex];
-	}
-
-	return nullptr;
-}
-
 void ACXGameModeBase::OnMainTimerElapsed()
 {
-	if (AllPlayerControllers.Num() == 0)
-	{
-		return;
-	}
-
-	CurrentTurnIndex = (CurrentTurnIndex + 1) % AllPlayerControllers.Num();
-
-	for (int32 i = 0; i < AllPlayerControllers.Num(); ++i)
-	{
-		if (IsValid(AllPlayerControllers[i]) == true)
-		{
-			if (i == CurrentTurnIndex)
-			{
-				AllPlayerControllers[i]->NotificationText = FText::FromString(TEXT("It's your turn!"));
-			}
-			else
-			{
-				AllPlayerControllers[i]->NotificationText = FText::FromString(TEXT("Waiting for other player..."));
-			}
-		}
-	}
 }
+
+

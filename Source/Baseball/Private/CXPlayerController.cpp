@@ -36,14 +36,19 @@ void ACXPlayerController::BeginPlay()
 			ChatInputWidgetInstance->AddToViewport();
 		}
 	}
-
+	
 	if (IsValid(NotificationTextWidgetClass) == true)
 	{
-		NotificationTextWidgetInstance = CreateWidget<UUserWidget>(this, NotificationTextWidgetClass);
-		if (IsValid(NotificationTextWidgetInstance) == true)
-		{
-			NotificationTextWidgetInstance->AddToViewport();
-		}
+		
+			NotificationTextWidgetInstance = CreateWidget<UUserWidget>(this, NotificationTextWidgetClass);
+			
+			
+            if (IsValid(NotificationTextWidgetInstance) == true )
+            {
+                NotificationTextWidgetInstance->AddToViewport();
+            }
+			
+		
 	}
 }
 
@@ -101,3 +106,4 @@ void ACXPlayerController::GetLifetimeReplicatedProps(TArray<class FLifetimePrope
 
 	DOREPLIFETIME(ThisClass, NotificationText);
 }
+

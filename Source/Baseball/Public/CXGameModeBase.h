@@ -35,7 +35,7 @@ public:
 
 	void JudgeGame(ACXPlayerController* InChattingPlayerController, int InStrikeCount);
 
-	ACXPlayerController* GetCurrentTurnPlayerController() const;
+	//ACXPlayerController* GetCurrentTurnPlayerController() const;
 
 private:
 	UFUNCTION()
